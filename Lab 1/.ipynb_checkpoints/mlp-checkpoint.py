@@ -93,7 +93,7 @@ class MLP:
         outputs_train = self.feedforward(self.dataset.x_train)
         
         train_loss = np.mean(np.square(outputs_train - self.dataset.y_train_oh))
-        train_acc = np.mean(np.argmax(outputs_train,1) == self.dataset.y_train)
+        train_acc = np.mean(np.argmax(outputs_train,1) == self.dataset.y_train) * 100
         print("\tTrain loss:     %0.4f"%train_loss)
         print("\tTrain accuracy: %0.2f"%train_acc)
 
@@ -101,6 +101,6 @@ class MLP:
         outputs_test = self.feedforward(self.dataset.x_test)
         
         test_loss = np.mean(np.square(outputs_test - self.dataset.y_test_oh))
-        test_acc = np.mean(np.argmax(outputs_test,1) == self.dataset.y_test)
+        test_acc = np.mean(np.argmax(outputs_test,1) == self.dataset.y_test) * 100
         print("\tTest loss:      %0.4f"%test_loss)
         print("\tTest accuracy:  %0.2f"%test_acc)
