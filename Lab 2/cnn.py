@@ -27,38 +27,48 @@ def conv2d_layer(h,     # activations from previous layer, shape = [height, widt
 ):
     # TODO: implement the convolutional layer
     # 1. Specify the number of input and output channels
-    CI = # Number of input channels
-    CO = # Number of output channels
+    CI = W.shape[2] # Number of input channels
+    CO = W.shape[3] # Number of output channels
+    
+    output = np.zeros((h.shape[0], h.shape[1], CO))
     
     # 2. Setup a nested loop over the number of output channels 
     #    and the number of input channels
-    for i in ...:
-        for j in ...:
+    for i in range(CO):
+        conv_sum = 0
+        for j in range(CI):
             
     # 3. Get the kernel mapping between channels i and j
-            kernel =
+            kernel = W[:,:,j,i]
     # 4. Flip the kernel horizontally and vertically (since
     #    We want to perform cross-correlation, not convolution.
     #    You can, e.g., look at np.flipud and np.fliplr
+            kernel = np.flipud(np.fliplr(kernel))
     # 5. Run convolution (you can, e.g., look at the convolve2d
     #    function in the scipy.signal library)
+            conv = signal.convolve2d(h[:,:,j], kernel, mode='same')
     # 6. Sum convolutions over input channels, as described in the 
     #    equation for the convolutional layer
+            conv_sum += conv
     # 7. Finally, add the bias and apply activation function
-
+        output[:,:,i] = activation(conv_sum + b[i], act)
+    
+    return output
 
 # 2D max pooling layer
 def pool2d_layer(h):  # activations from conv layer, shape = [height, width, channels]
     # TODO: implement the pooling operation
     # 1. Specify the height and width of the output
-    sy, sx = 
+    sy, sx = h.shape[0] // 2, h.shape[1] // 2
 
     # 2. Specify array to store output
-    ho = 
+    ho = np.zeros((sy, sx, h.shape[2]))
 
     # 3. Perform pooling for each channel.
     #    You can, e.g., look at the measure.block_reduce() function
     #    in the skimage library
+    for i in range(h.shape[2]):
+        ho[:,:,i] = skimage.measure.block_reduce(h[:,:,i], block_size=(2,2), func=np.max)
     
     return ho
 
@@ -67,6 +77,7 @@ def pool2d_layer(h):  # activations from conv layer, shape = [height, width, cha
 def flatten_layer(h): # activations from conv/pool layer, shape = [height, width, channels]
     # TODO: Flatten the array to a vector output.
     # You can, e.g., look at the np.ndarray.flatten() function
+    return np.ndarray.flatten(h)
 
     
 # Dense (fully-connected) layer
@@ -78,7 +89,10 @@ def dense_layer(h,   # Activations from previous layer
     # TODO: implement the dense layer.
     # You can use the code from your implementation
     # in Lab 1. Make sure that the h vector is a [Kx1] array.
-
+    h = h[:, np.newaxis]
+    h = np.dot(W, h) + b
+    h = activation(h, act)
+    return h[:,0]
     
 #---------------------------------
 # Our own implementation of a CNN
@@ -108,7 +122,14 @@ class CNN:
 
         # TODO: specify the total number of weights in the model
         #       (convolutional kernels, weight matrices, and bias vectors)
-        self.N = 
+        self.N = 0
+        
+        for i in self.W:
+            self.N += np.prod(np.array(i).shape) 
+
+
+        for i in self.b:
+            self.N += np.prod(np.array(i).shape)
 
         print('Number of model weights: ', self.N)
 
@@ -153,13 +174,17 @@ class CNN:
         # TODO: formulate the training loss and accuracy of the CNN.
         # Assume the cross-entropy loss.
         # For the accuracy, you can use the implementation from Lab 1.
-        train_loss = 
-        train_acc = 
+        outputs_train = self.feedforward(self.dataset.x_train)
+        
+        train_loss = -np.mean(np.log(outputs_train[np.arange(len(outputs_train)), self.dataset.y_train]))
+        train_acc = np.mean(np.argmax(outputs_train,1) == self.dataset.y_train) * 100
         print("\tTrain loss:     %0.4f"%train_loss)
         print("\tTrain accuracy: %0.2f"%train_acc)
 
         # TODO: formulate the test loss and accuracy of the CNN
-        test_loss = 
-        test_acc = 
-        print("\tTest loss:      %0.4f"%train_loss)
+        outputs_test = self.feedforward(self.dataset.x_test)
+        
+        test_loss = -np.mean(np.log(outputs_test[np.arange(len(outputs_test)), self.dataset.y_test]))
+        test_acc = np.mean(np.argmax(outputs_test,1) == self.dataset.y_test) * 100
+        print("\tTest loss:      %0.4f"%test_loss)
         print("\tTest accuracy:  %0.2f"%test_acc)
