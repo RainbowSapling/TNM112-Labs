@@ -127,7 +127,6 @@ class CNN:
         for i in self.W:
             self.N += np.prod(np.array(i).shape) 
 
-
         for i in self.b:
             self.N += np.prod(np.array(i).shape)
 
